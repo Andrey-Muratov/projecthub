@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: projecthub
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: postgres
+      - key: PROJECTHUB_SEED_ENABLED
+        value: "true"
+      - key: PROJECTHUB_SEED_DEMO_DATA_ENABLED
+        value: "true"
+      - key: PROJECTHUB_SEED_ADMIN_LOGIN
+        value: admin
+      - key: PROJECTHUB_SEED_ADMIN_PASSWORD
+        value: admin123
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=75"
+      - key: DB_HOST
+        fromDatabase:
+          name: projecthub-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: projecthub-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: projecthub-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: projecthub-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: projecthub-db
+          property: password
+
+databases:
+  - name: projecthub-db
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: "16"
+    databaseName: projecthub
+    user: projecthub

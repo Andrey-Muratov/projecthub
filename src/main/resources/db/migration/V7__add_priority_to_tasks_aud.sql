@@ -1,0 +1,1 @@
+ALTER TABLE tasks_aud ADD COLUMN priority VARCHAR(20);

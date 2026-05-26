@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf?.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+    <title th:text="${title} ?: 'ProjectHub'">ProjectHub</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/webjars/htmx.org/1.9.12/dist/htmx.min.js}"></script>
+    <script th:src="@{/js/htmx-csrf.js}" defer></script>
+
+    <script th:inline="javascript">/*<![CDATA[*/
+        (function () {
+            try {
+                var saved = localStorage.getItem('projecthub-theme');
+                if (!saved) {
+                    saved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-bs-theme', saved);
+            } catch (e) { /* no-op */ }
+        })();
+    /*]]>*/</script>
+</head>
+<body>
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" th:href="@{/dashboard}">
+            <i class="bi bi-kanban"></i> ProjectHub
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item" sec:authorize="isAuthenticated()">
+                    <a class="nav-link" th:href="@{/dashboard}">
+                        <i class="bi bi-speedometer2"></i> Мой день
+                    </a>
+                </li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/projects}">Проекты</a></li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:href="@{/admin/users}">Пользователи</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:href="@{/admin/stats}">Статистика</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/swagger-ui.html}" target="_blank">API</a>
+                </li>
+            </ul>
+
+            <div class="navbar-search me-lg-3" sec:authorize="isAuthenticated()">
+                <i class="bi bi-search navbar-search-icon"></i>
+                <input type="search" name="q" autocomplete="off"
+                       class="form-control form-control-sm"
+                       placeholder="Поиск по проектам и задачам…"
+                       th:hx-get="@{/search}"
+                       hx-trigger="keyup changed delay:300ms, focus"
+                       hx-target="#searchResults"
+                       hx-swap="innerHTML">
+                <div id="searchResults" class="navbar-search-results"></div>
+            </div>
+
+            <ul class="navbar-nav align-items-lg-center">
+                <li class="nav-item me-lg-2">
+                    <button id="themeToggle" type="button"
+                            class="btn btn-sm btn-outline-light"
+                            aria-label="Переключить тему" title="Переключить тему">
+                        <i id="themeToggleIcon" class="bi bi-moon-stars"></i>
+                    </button>
+                </li>
+                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+                       data-bs-toggle="dropdown" href="#">
+                        <span sec:authentication="name" th:remove="tag" th:with="login=${#authentication.name}">
+                            <span class="avatar-badge avatar-sm"
+                                  th:style="'background:' + ${@avatars.color(login)}"
+                                  th:text="${@avatars.initial(login)}">U</span>
+                        </span>
+                        <span sec:authentication="name">user</span>
+                        <span class="badge bg-secondary"
+                              sec:authentication="principal.authorities">[ROLE]</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" th:href="@{/settings}">
+                                <i class="bi bi-gear"></i> Настройки
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="px-2">
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                    <i class="bi bi-box-arrow-right"></i> Выйти
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div th:fragment="flash">
+
+    <noscript>
+        <div th:if="${flashSuccess}" class="container mt-3">
+            <div class="alert alert-success" role="alert" th:text="${flashSuccess}">OK</div>
+        </div>
+        <div th:if="${flashError}" class="container mt-3">
+            <div class="alert alert-danger" role="alert" th:text="${flashError}">ERR</div>
+        </div>
+    </noscript>
+    <script th:if="${flashSuccess}" th:inline="javascript">/*<![CDATA[*/
+        window.addEventListener('DOMContentLoaded', function () {
+            if (window.ProjectHubToast) window.ProjectHubToast.success(/*[[${flashSuccess}]]*/ '');
+        });
+    /*]]>*/</script>
+    <script th:if="${flashError}" th:inline="javascript">/*<![CDATA[*/
+        window.addEventListener('DOMContentLoaded', function () {
+            if (window.ProjectHubToast) window.ProjectHubToast.error(/*[[${flashError}]]*/ '');
+        });
+    /*]]>*/</script>
+    <script th:if="${flashConfetti}">
+        window.addEventListener('load', function () {
+            if (window.ProjectHubConfetti) { window.ProjectHubConfetti.burst(); }
+        });
+    </script>
+</div>
+
+<div th:fragment="pagination(page, baseHref)" th:if="${page.totalPages > 1}" class="mt-3">
+    <nav aria-label="Pagination">
+        <ul class="pagination justify-content-center mb-0">
+            <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                <a class="page-link"
+                   th:href="${baseHref + (baseHref.contains('?') ? '&' : '?') + 'page=' + (page.number - 1) + '&size=' + page.size}">
+                    Назад
+                </a>
+            </li>
+            <li class="page-item active">
+                <span class="page-link">
+                    <span th:text="${page.number + 1}">1</span> / <span th:text="${page.totalPages}">1</span>
+                </span>
+            </li>
+            <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                <a class="page-link"
+                   th:href="${baseHref + (baseHref.contains('?') ? '&' : '?') + 'page=' + (page.number + 1) + '&size=' + page.size}">
+                    Вперёд
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<footer th:fragment="footer" class="footer mt-auto py-3 bg-light border-top">
+    <div class="container text-center text-muted small d-flex flex-wrap justify-content-center align-items-center gap-3">
+        <span>ProjectHub © 2026 - Курсовой проект</span>
+        <button type="button" class="btn btn-link btn-sm p-0 text-muted"
+                data-bs-toggle="modal" data-bs-target="#hotkeysCheatsheet"
+                title="Горячие клавиши (?)">
+            <i class="bi bi-keyboard"></i> Горячие клавиши
+        </button>
+    </div>
+</footer>
+
+<div th:fragment="cheatsheet" class="modal fade" id="hotkeysCheatsheet" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-keyboard"></i> Горячие клавиши
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-sm mb-0 cheatsheet-table">
+                    <tbody>
+                        <tr>
+                            <td><kbd>/</kbd></td>
+                            <td>Фокус на поиск</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>g</kbd> <kbd>d</kbd></td>
+                            <td>Перейти на дашборд</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>g</kbd> <kbd>p</kbd></td>
+                            <td>Перейти к проектам</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>g</kbd> <kbd>s</kbd></td>
+                            <td>Открыть Swagger UI</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>n</kbd></td>
+                            <td>Создать задачу (на странице проекта)</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>t</kbd></td>
+                            <td>Переключить тёмную / светлую тему</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>?</kbd></td>
+                            <td>Показать эту подсказку</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>Esc</kbd></td>
+                            <td>Скрыть поиск / закрыть модалку</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <span class="text-muted small me-auto">
+                    Хоткеи работают только когда фокус не в полях ввода.
+                </span>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/confetti.js}"></script>
+    <script th:src="@{/js/toasts.js}"></script>
+    <script th:src="@{/js/hotkeys.js}" defer></script>
+    <th:block th:replace="~{fragments/layout :: cheatsheet}"></th:block>
+</th:block>
+</body>
+</html>

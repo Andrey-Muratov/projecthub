@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Настройки - ProjectHub')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main class="container py-4">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/dashboard}">Дашборд</a></li>
+            <li class="breadcrumb-item active">Настройки</li>
+        </ol>
+    </nav>
+
+    <h1 class="h3 mb-3">
+        <i class="bi bi-gear"></i> Настройки
+    </h1>
+
+    <div class="card shadow-sm mb-3" style="max-width: 640px;">
+        <div class="card-body">
+            <h2 class="h5 mb-3">
+                <i class="bi bi-envelope"></i> Email
+            </h2>
+            <p class="text-muted small mb-3">
+                Укажите контактный email. Используется для упоминаний (@-меншенов) в комментариях.
+            </p>
+            <form th:action="@{/settings/notifications}" method="post" class="needs-validation" novalidate>
+                <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="mb-3">
+                    <label class="form-label" for="email">Email</label>
+                    <input id="email" name="email" type="email" class="form-control"
+                           th:value="${user.email}" placeholder="ivan@example.com">
+                </div>
+                <input type="hidden" name="emailNotifications" value="false">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Сохранить
+                </button>
+            </form>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

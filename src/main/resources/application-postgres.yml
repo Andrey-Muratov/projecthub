@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:projecthub}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:projecthub}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:projecthub}}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+management:
+  health:
+    mail:
+      enabled: false
+
+projecthub:
+  seed:
+    enabled: ${PROJECTHUB_SEED_ENABLED:true}

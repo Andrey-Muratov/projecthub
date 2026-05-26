@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<span th:fragment="badge(login, size)"
+      th:with="sizeClass=${size ?: 'md'}"
+      class="avatar-badge"
+      th:classappend="'avatar-' + ${sizeClass}"
+      th:style="'background:' + ${@avatars.color(login)}"
+      th:title="${login}"
+      th:text="${@avatars.initial(login)}">A</span>
+
+<span th:fragment="inline(login)" class="d-inline-flex align-items-center gap-1">
+    <span th:replace="~{fragments/avatar :: badge(login=${login}, size='md')}"></span>
+    <span th:text="${login}"></span>
+</span>
+
+</body>
+</html>
